@@ -75,13 +75,13 @@ function spg_init_nganluong_gateway_class() {
                     'title'       => __( 'Title', 'nganluong-gateway' ),
                     'type'        => 'text',
                     'description' => __( 'The title displayed at checkout.', 'nganluong-gateway' ),
-                    'default'     => __( 'Thanh toán Online Banking', 'nganluong-gateway' ),
+                    'default'     => __( 'Pay with Nganluong', 'nganluong-gateway' ),
                     'desc_tip'    => true,
                 ),
                 'description' => array(
                     'title'       => __( 'Description', 'nganluong-gateway' ),
                     'type'        => 'textarea',
-                    'default'     => __( 'Bạn sẽ được chuyển hướng đến trang Ngân lượng để thanh toán', 'nganluong-gateway' ),
+                    'default'     => __( 'You will be redirected to Nganluong to complete your purchase.', 'nganluong-gateway' ),
                 ),
                 'bank_code' => array(
                     'title'       => __( 'Default Bank Code', 'nganluong-gateway' ),
@@ -271,7 +271,7 @@ function spg_init_nganluong_gateway_class() {
             
             if ($response && isset($response['error_code']) && $response['error_code'] === "00") {
                 $order->payment_complete();
-                $order->update_status('completed');
+                $order->update_status('completed'); // ✅ Mark order as COMPLETED
                 $order->add_order_note("Payment completed via Nganluong. Transaction ID: " . $token);
                 wp_redirect($this->get_return_url($order));
                 exit;
