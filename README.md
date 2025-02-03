@@ -1,2 +1,1 @@
-# woocommerce-nganluong-gateway-plugin
-woocommerce-nganluong-gateway-plugin
+zip -r nganluong-gateway.zip nganluong-gateway
