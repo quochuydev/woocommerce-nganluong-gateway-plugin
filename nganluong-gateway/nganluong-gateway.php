@@ -3,7 +3,7 @@
  * Plugin Name: nganluong gateway
  * Plugin URI: https://portfolio.quochuy.dev/nganluong-gateway
  * Description: A custom WooCommerce payment gateway to integrate nganluong.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: @quochuydev
  * Author URI: https://portfolio.quochuy.dev
  * License: MIT License
@@ -25,9 +25,24 @@ function add_nganluong_gateway_class( $gateways ) {
 add_action( 'plugins_loaded', 'init_nganluong_gateway_class' );
 
 add_action('woocommerce_checkout_process', function() {
-    if ('nganluong' === WC()->session->get('chosen_payment_method')) {
-        if (empty($_POST['nganluong_bank_code'])) {
-            wc_add_notice(__('Please select a bank for payment.', 'nganluong-gateway'), 'error');
+    $chosen_payment_method = WC()->session->get('chosen_payment_method');
+    $bank_code = sanitize_text_field($_POST['nganluong_bank_code']);
+    $payment_method_type = sanitize_text_field($_POST['payment_method_type']);
+    $order_total = WC()->cart->total;
+
+    if ($chosen_payment_method === 'nganluong') {
+        if($payment_method_type === 'IB_ONLINE') {
+            if ($order_total < 20000) {
+                wc_add_notice(__('Số tiền tối thiểu để thanh toán Online Banking là 20,000 VND.', 'nganluong-gateway'), 'error');
+                return array('result' => 'failure');
+            }
+        }
+
+        if($payment_method_type === 'QRCODE247') {
+            if ($order_total < 50000) {
+                wc_add_notice(__('Số tiền tối thiểu để thanh toán QR Code là 50,000 VND.', 'nganluong-gateway'), 'error');
+                return array('result' => 'failure');
+            }
         }
     }
 });
@@ -185,13 +200,14 @@ function init_nganluong_gateway_class() {
 
         public function process_payment( $order_id ) {
             $order = wc_get_order( $order_id );
-
             $payment_method_type = sanitize_text_field($_POST['payment_method_type']);
+            $order_total = $order->get_total();
+
             error_log("payment_method_type: " . $payment_method_type);
 
-            if ($payment_method_type ==='IB_ONLINE') {
-                if ($order->get_total() < 20000 ) {
-                    wc_add_notice(__('The minimum order amount for Nganluong payment is 20,000 VND.', 'nganluong-gateway'), 'error');
+            if ($payment_method_type === 'IB_ONLINE') {
+                if ($order_total < 20000 ) {
+                    wc_add_notice(__('Số tiền tối thiểu để thanh toán Online Banking là 20,000 VND.', 'nganluong-gateway'), 'error');
                     return array('result' => 'failure');
                 }
 
@@ -208,9 +224,9 @@ function init_nganluong_gateway_class() {
                 }
             }
 
-            if ($payment_method_type ==='QRCODE247') {
-                if ($order->get_total() < 50000 ) {
-                    wc_add_notice(__('The minimum order amount for Nganluong payment is 50,000 VND.', 'nganluong-gateway'), 'error');
+            if ($payment_method_type === 'QRCODE247') {
+                if ($order_total < 50000 ) {
+                    wc_add_notice(__('Số tiền tối thiểu để thanh toán QR Code là 50,000 VND.', 'nganluong-gateway'), 'error');
                     return array('result' => 'failure');
                 }
 
@@ -385,7 +401,7 @@ function init_nganluong_gateway_class() {
             }
         
             $response = $this->verify_payment_status($token);
-            error_log('nganluongVerifyPayment: ' . $response);
+            error_log('verifyPayment: ' . $response);
             
             if ($response && isset($response['error_code']) && $response['error_code'] === "00") {
                 $order->payment_complete();
